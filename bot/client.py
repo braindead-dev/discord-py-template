@@ -30,10 +30,18 @@ def create_client() -> discord.Client:
     intents.message_content = True  # Required to read message content
     intents.members = True  # Optional: for member-related features
     
-    # Create client
+    # Create client with command tree
     client = discord.Client(intents=intents)
     
-    # Register event handlers
+    # Set up command tree
+    from .handlers.commands import CommandTree, setup_commands
+    tree = CommandTree(client)
+    client.tree = tree
+    
+    # Register commands
+    setup_commands(client, tree)
+    
+    # Register message event handlers
     from .handlers import message
     message.setup_handlers(client)
     
@@ -44,6 +52,10 @@ def create_client() -> discord.Client:
             f"Bot logged in as {client.user.name} (ID: {client.user.id})"
         )
         log.info(f"Connected to {len(client.guilds)} server(s)")
+        
+        # Sync commands to Discord
+        await tree.sync_commands()
+        log.info("Commands synced successfully")
     
     return client
 

@@ -6,7 +6,13 @@ A production-ready Discord bot template with LLM integration using Anthropic's C
 
 - 🤖 **Modern discord.py architecture** - Clean separation of concerns with handlers
 - 🧠 **LLM Integration** - Anthropic Claude API for intelligent responses
-- 🎯 **Smart Triggers** - Responds to @mentions and replies
+- 🎯 **Smart Triggers** - Responds to @mentions, replies, and DMs
+- ⚡ **Slash Commands** - Modern slash command system with `/ping` example
+- 💬 **Multiple Messages** - Automatically splits on newlines for natural conversation flow
+- 🔁 **Reply Feature** - Bot can reply to specific messages using `[reply:username]` syntax
+- 📢 **Mentions** - Bot can @mention users using `[@username]` syntax
+- ⏱️ **Typing Indicators** - Shows realistic typing behavior
+- 📁 **Prompt Management** - Organized prompts in separate .txt files
 - ⚙️ **Easy Configuration** - Centralized config system
 - 📝 **Logging** - Comprehensive logging setup
 - 🔒 **Environment Variables** - Secure credential management
@@ -20,9 +26,14 @@ discord-py-template/
 │   ├── client.py          # Discord client setup
 │   ├── config.py          # Bot configuration
 │   ├── llm.py             # LLM service integration
+│   ├── prompt_manager.py  # Prompt loading and management
+│   ├── prompts/           # Prompt text files
+│   │   ├── profile.txt    # Bot personality/identity
+│   │   └── base.txt       # Communication guidelines
 │   └── handlers/          # Event handlers
 │       ├── __init__.py
-│       └── message.py     # Message event handler
+│       ├── message.py     # Message event handler
+│       └── commands.py    # Slash command handler
 ├── main.py                # Entry point
 ├── requirements.txt       # Python dependencies
 ├── .env.example          # Environment variables template
@@ -79,17 +90,69 @@ The bot will respond to:
 - **Direct mentions** - `@BotName hello there`
 - **Replies** - Reply to any of the bot's messages
 - **DMs** - All messages in DMs
+- **Slash commands** - `/ping` to check if bot is responsive
+
+### Bot Capabilities
+
+The bot has several special features:
+
+#### Multiple Messages
+The bot can send multiple separate Discord messages by using double newlines in its response:
+```
+Message 1
+
+Message 2
+
+Message 3
+```
+
+#### Reply to Specific Messages
+The bot can reply to a specific user's message using:
+```
+[reply:username] your response here
+```
+
+#### Mention Users
+The bot can @mention users using:
+```
+[@username] your message
+```
 
 ### Configuration
 
 Edit `bot/config.py` to customize:
 - **LLM Model** - Change the Claude model (default: `claude-sonnet-4-5`)
 - **Max Tokens** - Adjust response length limits
-- **System Prompt** - Customize bot personality and behavior
+- **Message History** - Change how many messages to include in context
+- **Typing Indicators** - Enable/disable typing simulation
+
+Edit `bot/prompts/` to customize:
+- **profile.txt** - Bot's personality and identity
+- **base.txt** - Communication guidelines and behavior rules
 
 ## Development
 
-### Adding New Handlers
+### Adding New Commands
+
+To add a new slash command, edit `bot/handlers/commands.py`:
+
+```python
+@tree.command(name="hello", description="Say hello")
+async def hello_command(interaction: discord.Interaction):
+    """Greet the user."""
+    await interaction.response.send_message(f"Hello, {interaction.user.mention}!")
+
+# Command with parameters
+@tree.command(name="echo", description="Echo a message")
+@app_commands.describe(message="The message to echo")
+async def echo_command(interaction: discord.Interaction, message: str):
+    """Echo back the user's message."""
+    await interaction.response.send_message(message)
+```
+
+Commands will automatically sync to Discord when the bot starts.
+
+### Adding New Message Handlers
 
 Create new handler modules in `bot/handlers/` and register them in `bot/client.py`:
 
