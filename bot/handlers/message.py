@@ -113,9 +113,24 @@ async def generate_and_send_response(
             if conversation and conversation[-1]["role"] == "user":
                 log.info(f"User message: {conversation[-1]['content'][:100]}...")
             
+            # Build environment context
+            env_context = {}
+            if isinstance(channel, discord.DMChannel):
+                env_context["type"] = "DM"
+                env_context["dm_with"] = f"{channel.recipient.display_name} (@{channel.recipient.name})"
+            else:
+                env_context["type"] = "Server"
+                if hasattr(channel, "guild") and channel.guild:
+                    env_context["server_name"] = channel.guild.name
+                    env_context["member_count"] = channel.guild.member_count
+                if hasattr(channel, "name"):
+                    env_context["channel_name"] = channel.name
+                if hasattr(channel, "topic") and channel.topic:
+                    env_context["channel_description"] = channel.topic
+            
             # Generate response
             llm = get_service()
-            response = await llm.generate_response(conversation)
+            response = await llm.generate_response(conversation, environment_context=env_context)
             
             if not response:
                 log.error("Failed to generate response")

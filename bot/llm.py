@@ -2,12 +2,13 @@
 
 import logging
 import os
-from typing import List, Literal, Optional, TypedDict
+from typing import Any, Dict, List, Literal, Optional, TypedDict
 
 from anthropic import AsyncAnthropic
 from anthropic.types import Message, TextBlock
 
 from .config import config
+from .prompt_manager import build_system_prompt
 
 log = logging.getLogger("bot.llm")
 
@@ -39,7 +40,7 @@ class LLMService:
     async def generate_response(
         self, 
         messages: List[ConversationMessage],
-        system_prompt: Optional[str] = None,
+        environment_context: Optional[Dict[str, Any]] = None,
         model: Optional[str] = None,
         max_tokens: Optional[int] = None
     ) -> Optional[str]:
@@ -48,7 +49,7 @@ class LLMService:
         
         Args:
             messages: List of conversation messages with role and content
-            system_prompt: Optional system prompt (uses config default if not provided)
+            environment_context: Optional environment context (server, channel, DM info)
             model: Optional model override (uses config default if not provided)
             max_tokens: Optional max tokens override (uses config default if not provided)
         
@@ -59,7 +60,9 @@ class LLMService:
             # Use config defaults if not provided
             model = model or config.llm_model
             max_tokens = max_tokens or config.max_tokens
-            system_prompt = system_prompt or config.system_prompt
+            
+            # Build system prompt from prompt files with environment context
+            system_prompt = build_system_prompt(environment_context)
             
             # Make API request
             response: Message = await self.client.messages.create(
